@@ -2,7 +2,7 @@
 #import <UIKit/UIKit.h>
 #import <AVKit/AVKit.h>
 #import <AVFoundation/AVFoundation.h>
-
+#import <MediaPlayer/MediaPlayer.h>
 static NSString *const CHANNEL_NAME = @"bz.rxla.flutter/audio";
 static FlutterMethodChannel *channel;
 static AVPlayer *player;
@@ -21,10 +21,13 @@ static AVPlayerItem *playerItem;
 
 CMTime position;
 NSString *lastUrl;
+int islocal;
 BOOL isPlaying = false;
 NSMutableSet *observers;
 NSMutableSet *timeobservers;
 FlutterMethodChannel *_channel;
+
+
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
     FlutterMethodChannel* channel = [FlutterMethodChannel
@@ -33,6 +36,165 @@ FlutterMethodChannel *_channel;
     AudioplayerPlugin* instance = [[AudioplayerPlugin alloc] init];
     [registrar addMethodCallDelegate:instance channel:channel];
     _channel = channel;
+    [registrar addApplicationDelegate:instance];
+}
+
+-(void)applicationWillResignActive:(UIApplication *)application
+{
+    [[UIApplication sharedApplication] beginReceivingRemoteControlEvents];
+    // *后台播放代码
+    AVAudioSession*session=[AVAudioSession sharedInstance];
+    [session setActive:YES error:nil];
+    [session setCategory:AVAudioSessionCategoryPlayback error:nil];
+}
+
+-(void)applicationDidEnterBackground:(UIApplication *)application
+{
+    [self setupLockScreenControlInfo];
+}
+- (void)setupLockScreenControlInfo {
+    
+    MPRemoteCommandCenter *commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
+    
+    // 锁屏播放
+    MPRemoteCommand *playCommand = commandCenter.playCommand;
+    playCommand.enabled = YES;
+    [playCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        NSLog(@"锁屏暂停后点击播放");
+        if (!isPlaying) {
+            [self play:lastUrl isLocal:islocal];
+        }
+        return MPRemoteCommandHandlerStatusSuccess;
+    }];
+    
+    // 锁屏暂停
+    MPRemoteCommand *pauseCommand = commandCenter.pauseCommand;
+    pauseCommand.enabled = YES;
+    [pauseCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        NSLog(@"锁屏正在播放点击后暂停");
+        
+        if (isPlaying) {
+            [self pause];
+        }
+        return MPRemoteCommandHandlerStatusSuccess;
+    }];
+    
+    
+    MPRemoteCommand *stopCommand = commandCenter.stopCommand;
+    stopCommand.enabled = YES;
+    [stopCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        [self stop];
+        
+        return MPRemoteCommandHandlerStatusSuccess;
+    }];
+    
+    // 播放和暂停按钮（耳机控制）
+    MPRemoteCommand *playPauseCommand = commandCenter.togglePlayPauseCommand;
+    playPauseCommand.enabled = YES;
+    
+    [playPauseCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        
+        if (isPlaying) {
+             [self pause];
+        }else {
+             [self play:lastUrl isLocal:islocal];
+        }
+        
+        return MPRemoteCommandHandlerStatusSuccess;
+    }];
+    
+    
+    /*    这部分功能没有用到，就暂时先放在这里
+     // 上一曲
+     MPRemoteCommand *previousCommand = commandCenter.previousTrackCommand;
+     [previousCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+     
+     [self playPrevMusic];
+     
+     return MPRemoteCommandHandlerStatusSuccess;
+     }];
+     
+     // 下一曲
+     MPRemoteCommand *nextCommand = commandCenter.nextTrackCommand;
+     nextCommand.enabled = YES;
+     [nextCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+     
+     self.isAutoPlay = NO;
+     
+     if (self.isPlaying) {
+     [self stopMusic];
+     }
+     
+     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+     
+     
+     [self playNextMusic];
+     });
+     
+     return MPRemoteCommandHandlerStatusSuccess;
+     }];
+     
+     // 快进
+     MPRemoteCommand *forwardCommand = commandCenter.seekForwardCommand;
+     forwardCommand.enabled = YES;
+     [forwardCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+     
+     MPSeekCommandEvent *seekEvent = (MPSeekCommandEvent *)event;
+     if (seekEvent.type == MPSeekCommandEventTypeBeginSeeking) {
+     [self seekingForwardStart];
+     }else {
+     [self seekingForwardStop];
+     }
+     
+     return MPRemoteCommandHandlerStatusSuccess;
+     }];
+     
+     // 快退
+     MPRemoteCommand *backwardCommand = commandCenter.seekBackwardCommand;
+     backwardCommand.enabled = YES;
+     [backwardCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+     
+     MPSeekCommandEvent *seekEvent = (MPSeekCommandEvent *)event;
+     if (seekEvent.type == MPSeekCommandEventTypeBeginSeeking) {
+     [self seekingBackwardStart];
+     }else {
+     [self seekingBackwardStop];
+     }
+     
+     return MPRemoteCommandHandlerStatusSuccess;
+     }];
+     */
+    
+     //拖动进度条
+//    if (@available(iOS 9.1, *)) {
+//
+//
+//        MPRemoteCommand *changePlaybackPositionCommand = commandCenter.changePlaybackPositionCommand;
+//        changePlaybackPositionCommand.enabled = YES;
+//        [changePlaybackPositionCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+//            MPChangePlaybackPositionCommandEvent *positionEvent = (MPChangePlaybackPositionCommandEvent *)event;
+//
+//            self.positionTime = positionEvent.positionTime;
+//            NSLog(@"positionTime = %f",self.positionTime);
+//            //业务逻辑如下：
+//            self.currentTime = (float)self.positionTime * 1000 >= self.courseItem.duration.integerValue * 1000 ? self.courseItem.duration.integerValue * 1000 : (float)self.positionTime * 1000;
+//
+//            CGFloat value = self.currentTime / self.duration;
+//            if (isPlaying) {
+//                [kAudioPlayer setPlayerProgress:value];
+//            }else {
+//                if (value == 0) {
+//                    value = 0.001;
+//                }
+//                self.seekProgress = value;
+//            }
+//            self.updataMediaCount = 0;
+//            NSLog(@"self.isDraging = %d",self.isDraging);
+//            return MPRemoteCommandHandlerStatusSuccess;
+//        }];
+//    } else {
+//        // Fallback on earlier versions
+//    }
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
@@ -92,7 +254,7 @@ FlutterMethodChannel *_channel;
             playerItem = [[AVPlayerItem alloc] initWithURL:[NSURL URLWithString:url]];
         }
         lastUrl = url;
-        
+        islocal = isLocal;
         id anobserver = [[NSNotificationCenter defaultCenter] addObserverForName:AVPlayerItemDidPlayToEndTimeNotification
                                                                           object:playerItem
                                                                            queue:nil
