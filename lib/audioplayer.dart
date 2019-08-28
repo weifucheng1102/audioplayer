@@ -43,8 +43,8 @@ class AudioPlayer {
   }
 
   /// Play a given url.
-  Future<void> play(String url, {bool isLocal: false}) async =>
-      await _channel.invokeMethod('play', {'url': url, 'isLocal': isLocal});
+  Future<void> play(String url, {bool isLocal: false, String name = '', String img = ''}) async =>
+      await _channel.invokeMethod('play', {'url': url, 'isLocal': isLocal, 'name': name, img: img});
 
   /// Pause the currently playing stream.
   Future<void> pause() async => await _channel.invokeMethod('pause');

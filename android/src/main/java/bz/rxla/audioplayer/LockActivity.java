@@ -52,7 +52,7 @@ public class LockActivity extends Activity {
         }
 
         Glide.with(this)
-                .load("http://05imgmini.eastday.com/mobile/20181013/20181013_da58d8665e2d35cd7c2ad4db1a820288_cover_mwpm_03200403.jpg")
+                .load(img)
                 .apply(RequestOptions.bitmapTransform(new GlideCircleWithBorder(6, Color.parseColor("#66000000"))))
 //                .apply(RequestOptions.bitmapTransform(new CircleCrop()))
                 .into(iv_img);
