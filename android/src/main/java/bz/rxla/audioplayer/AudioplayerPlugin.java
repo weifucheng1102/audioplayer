@@ -1,9 +1,12 @@
 package bz.rxla.audioplayer;
 
+import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Handler;
 import android.util.Log;
+
+import bz.rxla.audioplayer.receiver.ScreenListener;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
@@ -22,10 +25,12 @@ import android.os.Build;
 public class AudioplayerPlugin implements MethodCallHandler {
   private static final String ID = "bz.rxla.flutter/audio";
 
-  private final MethodChannel channel;
+  private static MethodChannel channel;
   private final AudioManager am;
-  private final Handler handler = new Handler();
-  private MediaPlayer mediaPlayer;
+  private static final Handler handler = new Handler();
+  public static MediaPlayer mediaPlayer;
+  String name;
+  String img;
 
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), ID);
@@ -37,6 +42,35 @@ public class AudioplayerPlugin implements MethodCallHandler {
     channel.setMethodCallHandler(this);
     Context context = registrar.context().getApplicationContext();
     this.am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+    registLisener(context);
+    play("http://sdqindao.oss-cn-beijing.aliyuncs.com/debug/2019/07/10/89f7cff89d19e84c66e43eb40cbe8a7b.mp3");
+  }
+
+  ScreenListener l ;
+  private void registLisener(final Context context) {
+    l = new ScreenListener(context);
+    l.begin(new ScreenListener.ScreenStateListener() {
+      @Override
+      public void onUserPresent() {
+        Log.e("onUserPresent", "onUserPresent");
+      }
+
+      @Override
+      public void onScreenOn() {
+        Log.e("onScreenOn", "onScreenOn");
+      }
+
+      @Override
+      public void onScreenOff() {
+        Log.e("onScreenOff", "onScreenOff");
+        if(mediaPlayer!=null && mediaPlayer.isPlaying()){
+          Intent lockscreen = new Intent(context, LockActivity.class);
+          lockscreen.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+          context.startActivity(lockscreen);
+        }
+
+      }
+    });
   }
 
   @Override
@@ -44,6 +78,8 @@ public class AudioplayerPlugin implements MethodCallHandler {
     switch (call.method) {
       case "play":
         play(call.argument("url").toString());
+        name = call.argument("name").toString();
+        img = call.argument("img").toString();
         response.success(null);
         break;
       case "pause":
@@ -81,7 +117,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
     mediaPlayer.seekTo((int) (position * 1000));
   }
 
-  private void stop() {
+  public static void stop() {
     handler.removeCallbacks(sendData);
     if (mediaPlayer != null) {
       mediaPlayer.stop();
@@ -91,7 +127,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
     }
   }
 
-  private void pause() {
+  public static void pause() {
     handler.removeCallbacks(sendData);
     if (mediaPlayer != null) {
       mediaPlayer.pause();
@@ -99,7 +135,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
     }
   }
 
-  private void play(String url) {
+  public static void play(String url) {
     if (mediaPlayer == null) {
       mediaPlayer = new MediaPlayer();
       mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -144,7 +180,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
     handler.post(sendData);
   }
 
-  private final Runnable sendData = new Runnable(){
+  private static final Runnable sendData = new Runnable(){
     public void run(){
       try {
         if (!mediaPlayer.isPlaying()) {

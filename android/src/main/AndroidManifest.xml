@@ -3,5 +3,20 @@
   android:versionCode="1"
   android:versionName="0.1.0">
 
-  <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="21" />
+  <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"/>
+  <uses-permission android:name="android.permission.INTERNET"/>
+
+  <!--<uses-sdk android:minSdkVersion="16" android:targetSdkVersion="21" />-->
+  <application>
+    <activity android:name=".MainActivity"
+        android:theme="@android:style/Theme.NoTitleBar"/>
+    <activity
+        android:excludeFromRecents="true"
+        android:launchMode="singleInstance"
+        android:name=".LockActivity"
+        android:screenOrientation="portrait"
+        android:taskAffinity="com.package.name.lockscreen"
+        android:noHistory="true"
+        android:theme="@android:style/Theme.NoTitleBar"/>
+  </application>
 </manifest>
