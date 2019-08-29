@@ -48,14 +48,18 @@ public class LockActivity extends Activity {
         final ImageView iv_play = (ImageView) findViewById(R.id.iv_play);
 
         if (name!=null && name.length()>0){
-            tv_name.setText("");
+            tv_name.setText(name);
         }
 
-        Glide.with(this)
-                .load(img)
-                .apply(RequestOptions.bitmapTransform(new GlideCircleWithBorder(6, Color.parseColor("#66000000"))))
+        if (img!=null && img.length()>0){
+            Glide.with(this)
+                    .load(img)
+                    .apply(RequestOptions.bitmapTransform(new GlideCircleWithBorder(6, Color.parseColor("#66000000"))))
+
 //                .apply(RequestOptions.bitmapTransform(new CircleCrop()))
-                .into(iv_img);
+                    .into(iv_img);
+        }
+
         iv_play.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

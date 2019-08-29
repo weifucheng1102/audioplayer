@@ -43,6 +43,8 @@ public class AudioplayerPlugin implements MethodCallHandler {
     Context context = registrar.context().getApplicationContext();
     this.am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
     registLisener(context);
+//    play("http://sdqindao.oss-cn-beijing.aliyuncs.com/debug/2019/07/10/89f7cff89d19e84c66e43eb40cbe8a7b.mp3");
+
   }
 
   ScreenListener l ;
@@ -65,6 +67,8 @@ public class AudioplayerPlugin implements MethodCallHandler {
         if(mediaPlayer!=null && mediaPlayer.isPlaying()){
           Intent lockscreen = new Intent(context, LockActivity.class);
           lockscreen.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+          lockscreen.putExtra("name",name);
+          lockscreen.putExtra("img",img);
           context.startActivity(lockscreen);
         }
 
@@ -79,6 +83,9 @@ public class AudioplayerPlugin implements MethodCallHandler {
         play(call.argument("url").toString());
         name = call.argument("name").toString();
         img = call.argument("img").toString();
+        Log.e("url:",call.argument("url").toString());
+        Log.e("name:",name);
+        Log.e("img:",img);
         response.success(null);
         break;
       case "pause":
