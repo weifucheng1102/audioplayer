@@ -5,7 +5,7 @@
  * @Email: 284832506@qq.com
  * @Date: 2019-08-29 10:15:19
  * @LastEditors: dmlzj
- * @LastEditTime: 2019-09-04 09:26:15
+ * @LastEditTime: 2019-09-04 10:32:06
  * @如果有bug，那肯定不是我的锅，嘤嘤嘤
  */
 package bz.rxla.audioplayer;
@@ -100,7 +100,7 @@ public class LockActivity extends Activity {
             @Override
             public void onUserPresent() {
                 Log.e("onUserPresent", "onUserPresent");
-                finish();
+                // finish();
             }
 
             @Override
