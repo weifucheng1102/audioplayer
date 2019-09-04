@@ -1,3 +1,13 @@
+/*
+ * @Description: 锁屏插件修改
+ * @Author: dmlzj
+ * @Github: https://github.com/dmlzj
+ * @Email: 284832506@qq.com
+ * @Date: 2019-08-29 10:15:19
+ * @LastEditors: dmlzj
+ * @LastEditTime: 2019-09-04 09:26:15
+ * @如果有bug，那肯定不是我的锅，嘤嘤嘤
+ */
 package bz.rxla.audioplayer;
 
 import android.app.Activity;
@@ -22,7 +32,7 @@ public class LockActivity extends Activity {
 
     String name;
     String img;
-
+    String url;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,6 +45,7 @@ public class LockActivity extends Activity {
 
         name = getIntent().getStringExtra("name");
         img = getIntent().getStringExtra("img");
+        url = getIntent().getStringExtra("url");
 
         findViewById(R.id.back).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -70,7 +81,8 @@ public class LockActivity extends Activity {
                         iv_play.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_btn_play) );
                     } else {
 
-                        AudioplayerPlugin.mediaPlayer.start();
+//                        AudioplayerPlugin.mediaPlayer.start();
+                        AudioplayerPlugin.play(url);
                         iv_play.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_btn_pause) );
                     }
 
